@@ -5,13 +5,15 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends librsvg2-bin ca-certificates curl fontconfig fonts-dejavu-core fonts-firacode \
  && pip install --no-cache-dir pyyaml pillow \
  && mkdir -p /usr/share/fonts/truetype/fira \
- && ( for w in Regular Medium SemiBold Bold; do \
+ && ( set -e; for w in Regular Medium SemiBold Bold; do \
         curl -fsSL -o "/usr/share/fonts/truetype/fira/FiraSans-$w.ttf" \
-          "https://raw.githubusercontent.com/google/fonts/main/ofl/firasans/FiraSans-$w.ttf" || echo "missing FiraSans-$w"; \
+          "https://raw.githubusercontent.com/google/fonts/main/ofl/firasans/FiraSans-$w.ttf"; \
+        test -s "/usr/share/fonts/truetype/fira/FiraSans-$w.ttf"; \
       done ) \
  ; fc-cache -f \
  ; rm -rf /var/lib/apt/lists/*
 
-RUN fc-list | grep -ci fira || true
+# the render and qa_check measure from these exact faces: fail the build without them
+RUN fc-list | grep -qi "Fira Sans" && fc-list | grep -qi "Fira Code"
 WORKDIR /w
 CMD ["python3", "build_unahome.py"]

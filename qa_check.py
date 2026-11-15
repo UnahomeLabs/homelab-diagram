@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Layout QA for out/unahome.svg - catches what you cannot see in code:
 
+Exits non-zero when any count is not zero, so it works as a CI gate.
+
   1. text colliding with text
   2. text running past the right edge of the card it sits in
   3. cards partially overlapping each other (nested cards are fine)
@@ -12,7 +14,10 @@ import pathlib
 import sys
 import xml.etree.ElementTree as ET
 
-from PIL import ImageFont
+try:
+    from PIL import ImageFont
+except ImportError:                                        # noqa: BLE001
+    raise SystemExit("qa_check needs Pillow for exact text widths - uv sync")
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SVG = ROOT / "out" / "unahome.svg"
@@ -32,6 +37,9 @@ def measure(s, size, weight, mono):
     path = FILES.get(("mono" if mono else "sans", weight)) or FILES[("sans", 400)]
     ck = (path, round(size, 2))
     if ck not in CACHE:
+        if not pathlib.Path(path).exists():
+            raise SystemExit(f"missing font {path} - run this inside Dockerfile.unahome,\n"
+                             "or install Fira Sans + Fira Code")
         CACHE[ck] = ImageFont.truetype(path, max(int(round(size * 8)), 8))
     return CACHE[ck].getlength(s) / 8.0
 
@@ -122,6 +130,9 @@ def main():
         print("\nlayout map (x, y, w, h):")
         for r in sorted(rects, key=lambda r: (round(r[1]), round(r[0]))):
             print(f"  {r[0]:6.0f} {r[1]:6.0f} {r[2]-r[0]:6.0f} {r[3]-r[1]:6.0f}")
+
+    failing = len(hits) + len(over) + len(bad) + len(outside)
+    raise SystemExit(1 if failing else 0)
 
 
 if __name__ == "__main__":

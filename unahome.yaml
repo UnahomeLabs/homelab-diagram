@@ -165,7 +165,7 @@ cluster:
       mem: "31 GB"
       guests:
         - {kind: "CT", id: 102, name: "adguard", ip: ".148", role: "DNS + adblock", icon: "adguard"}
-        - {kind: "CT", id: 105, name: "postgresql", ip: ".183", role: "pg.unalome.lan", icon: "postgresql"}
+        - {kind: "CT", id: 105, name: "postgresql", ip: ".183", role: "pg.lab.lan", icon: "postgresql"}
         - {kind: "CT", id: 107, name: "influxdb", ip: ".107", role: "InfluxDB 3 Core :8181", icon: "influxdb"}
         - {kind: "CT", id: 114, name: "caddy", ip: ".199", role: "reverse proxy · LE wildcard", icon: "caddy"}
         - {kind: "VM", id: 120, name: "truenas", ip: ".208", role: "TrueNAS SCALE · NFS", icon: "truenas"}

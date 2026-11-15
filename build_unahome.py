@@ -27,11 +27,17 @@ ROOT = pathlib.Path(__file__).resolve().parent
 # real values live), then the redacted unahome.yaml committed in this repo.
 _ARGS = sys.argv[1:]
 if "--inventory" in _ARGS:
-    INV_PATH = pathlib.Path(_ARGS[_ARGS.index("--inventory") + 1]).resolve()
+    _i = _ARGS.index("--inventory")
+    if _i + 1 >= len(_ARGS):
+        raise SystemExit("--inventory needs a file")
+    INV_PATH = pathlib.Path(_ARGS[_i + 1]).resolve()
 elif (ROOT / "unahome.local.yaml").exists():
     INV_PATH = ROOT / "unahome.local.yaml"
 else:
     INV_PATH = ROOT / "unahome.yaml"
+
+if not INV_PATH.is_file():
+    raise SystemExit(f"inventory not found: {INV_PATH}")
 
 INV = yaml.safe_load(INV_PATH.read_text(encoding="utf-8"))
 ICONS = ROOT / "icons"
@@ -356,14 +362,11 @@ LX, LW = M, 520
 y = TOP
 y = networks_card(LX, y, LW) + 16
 y = legend_card(LX, y, LW) + 16
-y = public_card(LX, y, LW)
-LEFT_BOTTOM = y
+public_card(LX, y, LW)
 
 # ---------------------------------------------------------------- centre: internet, gateway, workstation
 CX = 1175
 cy = 200
-S.add("")
-blob_idx = len(S.p) - 1
 
 RX, RW = 700, 320
 rx_, ry_ = 580, 150
@@ -389,7 +392,6 @@ for dx, dy, r in [(-95, 18, 42), (-45, -8, 56), (25, -18, 62), (90, 6, 48), (130
 S.add(f'<rect x="{CX-147.5}" y="{cy+14.5}" width="295" height="41" rx="20.5" fill="#1a2433"/>')
 S.text(CX, cy + 16, INV["internet"]["title"], 26, TEXT, 600, "middle")
 S.text(CX, cy + 42, INV["internet"]["note"], 12, MUTED, 400, "middle")
-S.p[blob_idx] = ""
 
 device_card(ux, uy, uw, uh, ["unifi"], UD, NC["30"], stroke=TRUNK)
 chip_row(ux + 18, uy + 98, uw - 36, UD["roles"], h=42)
@@ -430,7 +432,8 @@ S.line([(ux + uw, uy + 84), (RX, uy + 84)], MUTED, 1.6, dash="2 5", r=0)
 S.label(ux + uw + 60, uy + 84 - 9, "tunnel out", MUTED, 11)
 
 # ---------------------------------------------------------------- cluster
-TOP_Y = max(RIGHT_BOTTOM, wy + wh, LEFT_BOTTOM if False else 0) + 20
+# the left column ends well above the cluster, so it never constrains TOP_Y
+TOP_Y = max(RIGHT_BOTTOM, wy + wh) + 20
 CL = INV["cluster"]
 cx0, cw_all = 580, W - M - 580
 

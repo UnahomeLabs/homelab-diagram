@@ -32,12 +32,13 @@ This fork adds a second renderer for my own six-node estate. Same palette and ca
 
 - `unahome.yaml` - the inventory: networks, edge, the cluster with every guest, the TrueNAS pools, the Docker host, the public names. The committed copy is **redacted**: the real domain is replaced with `redacted.com`.
 - `build_unahome.py` - cursor-computed layout, renders `out/unahome.svg` + `out/unahome.png`.
-- `qa_check.py` - the acceptance gate: text/text overlaps, text past its card edge, partially overlapping cards, anything off the canvas. All four counts must read zero.
-- `Dockerfile.unahome` - python 3.12 + librsvg + the Fira fonts, so every host renders the same pixels.
+- `qa_check.py` - the acceptance gate: text/text overlaps, text past its card edge, partially overlapping cards, anything off the canvas. All four counts must read zero, and the script exits non-zero if any does not.
+- `Dockerfile.unahome` - python 3.12 + librsvg + the Fira fonts, so every host renders the same pixels. The build fails if a Fira face is missing, because `qa_check.py` measures from those exact faces.
+- `fetch_unahome_icons.py` - downloads the service icons. They are **not** in git; without this step every service draws as a lettered tile.
 
 ```bash
 docker build -f Dockerfile.unahome -t unahome-diagram .
-docker run --rm -v "$PWD":/w unahome-diagram bash -c "python3 build_unahome.py; python3 qa_check.py"
+docker run --rm -v "$PWD":/w unahome-diagram bash -c "python3 fetch_unahome_icons.py; python3 build_unahome.py; python3 qa_check.py"
 ```
 
 `build_unahome.py` reads an untracked `unahome.local.yaml` when one exists - that is where my real values live - and `--inventory FILE` picks any other file.
