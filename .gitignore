@@ -4,3 +4,5 @@ __pycache__/
 # third-party icons are downloaded by fetch_icons.py, only the own glyphs are in the repo
 icons/*
 !icons/glyph-*.svg
+# the real (unredacted) inventory stays local; unahome.yaml is the redacted one
+unahome.local.yaml

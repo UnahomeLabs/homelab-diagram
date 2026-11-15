@@ -1,0 +1,273 @@
+# UnaHome Lab inventory — everything the diagram shows comes from this file.
+# Facts measured 2026-11-14 from the live cluster: Proxmox API (nodes/guests),
+# SSH to each node (hostnames, guest IPs), TrueNAS API (pools, datasets),
+# Dockhand (VM 113 containers) and the Caddy/npm config on CT 114 (public names).
+
+meta:
+  title: "UnaHome Lab · minirack"
+  subtitle: "6-node Proxmox VE cluster · 29 guests · UniFi Dream Router 7 edge"
+  date: "November 2026"
+  watermark: "Heimdall 002"
+  domain: "redacted.com"
+
+networks:
+  - key: "30"
+    tag: "VLAN 30"
+    name: "SERVERS"
+    subnet: "172.28.230.0/24"
+    color: "#58a6ff"
+    note: "the whole cluster · every guest · gateway .1"
+  - key: "220"
+    tag: "net .220"
+    name: "STUDIO"
+    subnet: "172.28.220.0/24"
+    color: "#bc8cff"
+    note: "XPS 8960 · draw.io :8087 · Ollama :11434"
+  - key: "210"
+    tag: "net .210"
+    name: "CLIENTS"
+    subnet: "172.28.210.0/24"
+    color: "#e3b341"
+    note: "UDR7 LAN side · WiFi 7 + wired clients"
+  - key: "wan"
+    tag: "WAN"
+    name: "UPLINK"
+    subnet: "ISP handoff"
+    color: "#f85149"
+    note: "UDR7 WAN · ISP handoff"
+
+internet:
+  title: "Internet"
+  note: "public web traffic arrives through the Cloudflare tunnel"
+
+udr7:
+  name: "UDR7"
+  type: "gateway"
+  model: "UniFi Dream Router 7"
+  ip: "172.28.230.1"
+  os: "UniFi OS · UniFi Network"
+  internal: "udr7"
+  roles:
+    - "NAT + firewall"
+    - "VLAN routing"
+    - "WiFi 7 AP"
+    - "DHCP + DNS"
+
+workstation:
+  name: "XPS 8960"
+  type: "workstation"
+  model: "Dell XPS 8960 · RTX 4080"
+  ip: "172.28.220.6"
+  os: "Windows 11 · WSL2"
+  config: "draw.io :8087 · Ollama :11434 · ComfyUI"
+  internal: "xps"
+
+cloud:
+  - icon: cloudflare
+    name: "Cloudflare"
+    note: "DNS · *.redacted.com · proxy"
+  - icon: cloudflare
+    name: "Let's Encrypt"
+    note: "wildcard · DNS-01 via Cloudflare"
+
+entry:
+  - name: "Cloudflare edge"
+    note: "proxy + TLS for the public names"
+  - name: "Tunnel · CT 101"
+    note: "cloudflared (podman) · no WAN ports"
+  - name: "Caddy · CT 114"
+    note: "wildcard cert · reverse proxy"
+
+remote:
+  name: "Remote access"
+  note: "Tailscale on CT 101 · ntfy push to the phone"
+
+public:
+  note: "Caddy (CT 114) terminates the wildcard cert · reached through the Cloudflare tunnel"
+  hosts:
+    - host: "dash.redacted.com"
+      to: "Homepage"
+      ct: "CT 111"
+      note: "dashboard · all six nodes"
+    - host: "notes.redacted.com"
+      to: "Trilium"
+      ct: "CT 109"
+      note: "notes + agent knowledge"
+    - host: "pm.redacted.com"
+      to: "Leantime"
+      ct: "CT 108"
+      note: "project management"
+    - host: "pw.redacted.com"
+      to: "Vaultwarden"
+      ct: "CT 116"
+      note: "passwords"
+    - host: "ha.redacted.com"
+      to: "Home Assistant"
+      ct: "VM 100"
+      note: "home automation"
+    - host: "money.redacted.com"
+      to: "Firefly III"
+      ct: "CT 112"
+      note: "finance"
+    - host: "ntfy.redacted.com"
+      to: "ntfy"
+      ct: "VM 113"
+      note: "push alerts"
+    - host: "mail.redacted.com"
+      to: "Stalwart"
+      ct: "CT 118"
+      note: "mail · IMAP + SMTP"
+
+cluster:
+  name: "minirack"
+  type: "PVE cluster"
+  model: "3 × NUC8i7HNK · 2 × NUC10i7FNH · 1 × NUC7i5BNH"
+  ip: "172.28.230.6 – .12"
+  os: "Proxmox VE 9.2.x"
+  internal: "minirack"
+  facts:
+    - icon: glyph-cpu
+      label: "THREADS"
+      value: "52"
+      sub: "across six nodes"
+    - icon: glyph-ram
+      label: "MEMORY"
+      value: "186 GB"
+      sub: "31 GB per node"
+    - icon: glyph-ssd
+      label: "BOOT DISK"
+      value: "6 × 250 GB"
+      sub: "Samsung 970 EVO Plus"
+    - icon: glyph-hdd
+      label: "GUESTS"
+      value: "26 CT · 3 VM"
+      sub: "all running"
+  columns:
+    - ["bmw1", "bmw2"]
+    - ["bmw3"]
+    - ["pve1", "pve2"]
+    - ["pve3"]
+  nodes:
+    - name: "bmw1"
+      model: "NUC8i7HNK"
+      cpu: "i7-8705G"
+      ip: ".11"
+      threads: 8
+      mem: "31 GB"
+      guests:
+        - {kind: "CT", id: 117, name: "n8n", ip: ".20", role: "automation engine", icon: "n8n"}
+        - {kind: "VM", id: 113, name: "docker", ip: ".87", role: "8 stacks · Dockhand-managed", icon: "docker"}
+    - name: "bmw2"
+      model: "NUC8i7HNK"
+      cpu: "i7-8705G"
+      ip: ".12"
+      threads: 8
+      mem: "31 GB"
+      guests:
+        - {kind: "CT", id: 102, name: "adguard", ip: ".148", role: "DNS + adblock", icon: "adguard"}
+        - {kind: "CT", id: 105, name: "postgresql", ip: ".183", role: "pg.unalome.lan", icon: "postgresql"}
+        - {kind: "CT", id: 107, name: "influxdb", ip: ".107", role: "InfluxDB 3 Core :8181", icon: "influxdb"}
+        - {kind: "CT", id: 114, name: "caddy", ip: ".199", role: "reverse proxy · LE wildcard", icon: "caddy"}
+        - {kind: "VM", id: 120, name: "truenas", ip: ".208", role: "TrueNAS SCALE · NFS", icon: "truenas"}
+    - name: "bmw3"
+      model: "NUC8i7HNK"
+      cpu: "i7-8705G"
+      ip: ".9"
+      threads: 8
+      mem: "31 GB"
+      guests:
+        - {kind: "CT", id: 101, name: "cloudflare", ip: ".57", role: "Cloudflare Tunnel · Tailscale", icon: "cloudflare"}
+        - {kind: "CT", id: 103, name: "ghostfolio", ip: ".144", role: "investments :3333", icon: "ghostfolio"}
+        - {kind: "CT", id: 104, name: "pihole", ip: ".212", role: "DNS + adblock", icon: "pihole"}
+        - {kind: "CT", id: 106, name: "grafana", ip: ".154", role: "dashboards · influx proxy", icon: "grafana"}
+        - {kind: "CT", id: 108, name: "leantime", ip: ".249", role: "project management", icon: "leantime", host: "pm"}
+        - {kind: "CT", id: 109, name: "trilium", ip: ".248", role: "notes + knowledge", icon: "trilium", host: "notes"}
+        - {kind: "CT", id: 112, name: "firefly", ip: ".172", role: "finance", icon: "firefly", host: "money"}
+        - {kind: "CT", id: 126, name: "alpaca-harness", ip: ".192", role: "agent harness · no web UI", icon: "alpaca"}
+    - name: "pve1"
+      model: "NUC7i5BNH"
+      cpu: "i5-7260U"
+      ip: ".6"
+      threads: 4
+      mem: "31 GB"
+      guests:
+        - {kind: "VM", id: 100, name: "homeassistant", ip: ".15", role: "HAOS · 4 vCPU · 30 GB", icon: "homeassistant", host: "ha"}
+    - name: "pve2"
+      model: "NUC10i7FNH"
+      cpu: "i7-10710U"
+      ip: ".7"
+      threads: 12
+      mem: "31 GB"
+      guests:
+        - {kind: "CT", id: 116, name: "vaultwarden", ip: ".207", role: "passwords", icon: "vaultwarden", host: "pw"}
+        - {kind: "CT", id: 118, name: "stalwart", ip: ".225", role: "mail · IMAP + SMTP", icon: "stalwart", host: "mail"}
+        - {kind: "CT", id: 121, name: "gev", ip: ".53", role: "web app :4173", icon: "generic"}
+        - {kind: "CT", id: 124, name: "blackout-llm", ip: ".150", role: "Open WebUI + Ollama + Kiwix", icon: "openwebui-l"}
+    - name: "pve3"
+      model: "NUC10i7FNH"
+      cpu: "i7-10710U"
+      ip: ".8"
+      threads: 12
+      mem: "31 GB"
+      guests:
+        - {kind: "CT", id: 110, name: "glance", ip: ".139", role: "dashboard :8080", icon: "glance"}
+        - {kind: "CT", id: 111, name: "homepage", ip: ".191", role: "dashboard · gethomepage", icon: "homepage", host: "dash"}
+        - {kind: "CT", id: 115, name: "wanderer", ip: ".197", role: "travel log", icon: "wanderer"}
+        - {kind: "CT", id: 119, name: "bentopdf", ip: ".109", role: "PDF editor · nginx :8080", icon: "bentopdf"}
+        - {kind: "CT", id: 122, name: "bookorbit", ip: ".177", role: "books + library", icon: "bookorbit"}
+        - {kind: "CT", id: 123, name: "tandoor", ip: ".32", role: "recipes", icon: "tandoor"}
+        - {kind: "CT", id: 125, name: "kiwix-maxi", ip: ".151", role: "offline wiki :8090", icon: "kiwix"}
+        - {kind: "CT", id: 127, name: "chatreply", ip: ".147", role: "chat replies · :3000", icon: "generic"}
+        - {kind: "CT", id: 128, name: "hortusfox", ip: ".88", role: "plant care · apache :80", icon: "hortusfox"}
+
+storage:
+  name: "TrueNAS SCALE"
+  type: "VM 120"
+  ip: "172.28.230.208"
+  internal: "truenas"
+  note: "bmw2 · 6 vCPU · 22 GB · NFS to every node"
+  pools:
+    - name: "tank"
+      layout: "3 disks · RAIDZ1"
+      used: "8 % used · 1.24 TiB free"
+      pct: 8
+      groups:
+        - kind: "hdd"
+          count: 3
+          label: "data · RAIDZ1"
+          sub: "1 disk may fail"
+          sub2: "1.35 TiB usable"
+    - name: "vault"
+      layout: "2 disks · mirror"
+      used: "0.3 % used · 228 GiB free"
+      pct: 1
+      groups:
+        - kind: "hdd"
+          count: 2
+          label: "data · mirror"
+          sub: "1 disk may fail"
+          sub2: "236 GiB usable"
+  footer: "exports → truenas-backups (all nodes) · truenas-influxdb3 (bmw2) · langfuse blobs"
+
+docker:
+  name: "Docker host"
+  type: "VM 113"
+  ip: "172.28.230.87"
+  note: "bmw1 · 8 vCPU · 26 GB · every stack managed through Dockhand"
+  apps:
+    - {icon: "docker", name: "Dockhand", note: "container management", port: ":3000"}
+    - {icon: "ntfy", name: "ntfy", note: "push alerts", port: ":8090", host: "ntfy"}
+    - {icon: "litellm", name: "LiteLLM", note: "model gateway", port: ":4000"}
+    - {icon: "langfuse", name: "Langfuse", note: "LLM traces + evals", port: ":3100"}
+    - {icon: "windmill", name: "Windmill", note: "workflow orchestrator", port: ":8095"}
+    - {icon: "firecrawl", name: "Firecrawl", note: "scrape · api stopped", port: "—"}
+    - {icon: "n8n", name: "n8n sandbox", note: "code execution", port: ":8080"}
+    - {icon: "generic", name: "MiniQR", note: "QR generator", port: ":8081"}
+
+legend:
+  - {kind: "netcolor", text: "card + cable color = its network"}
+  - {kind: "public", text: "public via Caddy + Cloudflare tunnel"}
+  - {kind: "internal", text: "LAN only, no public name"}
+  - {kind: "tunnel", text: "over the internet (not a cable)"}
+  - {kind: "guest", text: "CT / VM = guest kind and ID"}
+  - {kind: "docker", text: "Docker badge = multi-app host"}
