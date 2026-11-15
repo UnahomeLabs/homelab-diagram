@@ -26,6 +26,23 @@ The script behind the network diagram of my homelab that I posted on r/homelab. 
 - `build.py` draws the diagram as SVG with hand-placed coordinates, embeds the icons and converts it to PNG with `rsvg-convert`. Text widths for a few labels are measured with Pillow from the real font, so tabs and badges fit their text.
 - **Redaction:** by default the real domain is replaced with `redacted.com` and SSIDs get generic names, so the PNG can be posted publicly. `python3 build.py --unredacted` renders a private version with the real values from `inventory.yaml`.
 
+## The UnaHome variant (`build_unahome.py`)
+
+This fork adds a second renderer for my own six-node estate. Same palette and card language as `build.py`, but **the layout is computed** from the inventory instead of hand-placed, so adding a guest cannot make two cards collide.
+
+- `unahome.yaml` - the inventory: networks, edge, the cluster with every guest, the TrueNAS pools, the Docker host, the public names. The committed copy is **redacted**: the real domain is replaced with `redacted.com`.
+- `build_unahome.py` - cursor-computed layout, renders `out/unahome.svg` + `out/unahome.png`.
+- `qa_check.py` - the acceptance gate: text/text overlaps, text past its card edge, partially overlapping cards, anything off the canvas. All four counts must read zero, and the script exits non-zero if any does not.
+- `Dockerfile.unahome` - python 3.12 + librsvg + the Fira fonts, so every host renders the same pixels. The build fails if a Fira face is missing, because `qa_check.py` measures from those exact faces.
+- `fetch_unahome_icons.py` - downloads the service icons. They are **not** in git; without this step every service draws as a lettered tile.
+
+```bash
+docker build -f Dockerfile.unahome -t unahome-diagram .
+docker run --rm -v "$PWD":/w unahome-diagram bash -c "python3 fetch_unahome_icons.py; python3 build_unahome.py; python3 qa_check.py"
+```
+
+`build_unahome.py` reads an untracked `unahome.local.yaml` when one exists - that is where my real values live - and `--inventory FILE` picks any other file.
+
 ## Requirements
 
 - Python 3.11+ with **PyYAML** and **Pillow** (Pillow is optional, but makes label widths exact). Both are declared in `pyproject.toml`, so [uv](https://docs.astral.sh/uv/) installs them for you — see below.
